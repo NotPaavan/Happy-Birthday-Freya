@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>photo!</title>
+  <link rel="stylesheet" href="notes.css?v=16">
+  <link rel="stylesheet" href="camera.css?v=5">
+</head>
+<body>
+  <a class="back" href="index.html">Main page</a>
+
+  <main class="stage">
+    <canvas class="strip" aria-label="Your strip of three photos"></canvas>
+
+    <div class="actions">
+      <button class="collect" type="button" disabled>collect</button>
+      <a class="again" href="camera.html">take again</a>
+    </div>
+
+    <p class="hint" hidden>no photos yet — press take again to take some</p>
+  </main>
+
+  <!-- Saving: the share sheet puts it in photos, so the strip itself is shown
+       for a long press when the sheet is not there. -->
+  <div class="save" hidden>
+    <img class="save-img" alt="your strip of three photos">
+    <p class="save-note">press and hold the photo, then tap save image</p>
+    <div class="save-actions">
+      <a class="save-download" download="photo-strip.png">download it</a>
+      <button class="save-close" type="button">close</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var canvas = document.querySelector('.strip');
+      var ctx = canvas.getContext('2d');
+      var collectBtn = document.querySelector('.collect');
+      var hint = document.querySelector('.hint');
+      var savePanel = document.querySelector('.save');
+      var saveImg = document.querySelector('.save-img');
+      var saveDownload = document.querySelector('.save-download');
+      var saveClose = document.querySelector('.save-close');
+
+      /* The three empty frames inside assets/filmstrip-blank.png (450 x 1402). */
+      var frames = [
+        { x: 42, y: 34, w: 376, h: 384 },
+        { x: 41, y: 463, w: 376, h: 384 },
+        { x: 40, y: 906, w: 375, h: 383 }
+      ];
+
+      function coverInto(image, frame) {
+        var scale = Math.max(frame.w / image.width, frame.h / image.height);
+        var dw = image.width * scale;
+        var dh = image.height * scale;
+        ctx.drawImage(image, frame.x + (frame.w - dw) / 2, frame.y + (frame.h - dh) / 2, dw, dh);
+      }
+
+      function load(src) {
+        return new Promise(function (resolve, reject) {
+          var image = new Image();
+          image.onload = function () { resolve(image); };
+          image.onerror = reject;
+          image.src = src;
+        });
+      }
+
+      var shots = [];
+      var blackAndWhite = false;
+      try {
+        shots = JSON.parse(sessionStorage.getItem('booth-shots') || '[]');
+        blackAndWhite = sessionStorage.getItem('booth-bw') === '1';
+      } catch (error) {
+        shots = [];
+      }
+
+      /* Taken with the switch on: the whole strip is printed in black and white,
+         its film edges and paper included, not just the photos. */
+      function printInGrey() {
+        var frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var data = frame.data;
+        for (var i = 0; i < data.length; i += 4) {
+          var grey = Math.round(0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]);
+          data[i] = grey;
+          data[i + 1] = grey;
+          data[i + 2] = grey;
+        }
+        ctx.putImageData(frame, 0, 0);
+      }
+
+      var blank = new Image();
+      blank.onload = async function () {
+        canvas.width = blank.naturalWidth;
+        canvas.height = blank.naturalHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(blank, 0, 0);
+
+        if (shots.length !== frames.length) {
+          hint.hidden = false;
+          return;
+        }
+
+        for (var i = 0; i < frames.length; i++) {
+          try {
+            coverInto(await load(shots[i]), frames[i]);
+          } catch (error) {
+            hint.hidden = false;
+            return;
+          }
+        }
+        if (blackAndWhite) {
+          printInGrey();
+        }
+        prepareStrip();
+        collectBtn.disabled = false;
+      };
+      blank.src = 'assets/filmstrip-blank.png';
+
+      /* The strip as a file, made before it is asked for: the share sheet has to
+         open during the tap itself, not after a wait. */
+      var stripFile = null;
+
+      function prepareStrip() {
+        canvas.toBlob(function (blob) {
+          if (!blob) return;
+          var url = URL.createObjectURL(blob);
+          saveImg.src = url;
+          saveDownload.href = url;
+          try {
+            stripFile = new File([blob], 'photo-strip.png', { type: 'image/png' });
+          } catch (error) {
+            stripFile = null;
+          }
+        }, 'image/png');
+      }
+
+      function showSavePanel() {
+        savePanel.hidden = false;
+        saveClose.focus();
+      }
+
+      /* The phone's share sheet is the way into the camera roll: "save image"
+         there writes it to photos, where a download only reaches files. */
+      collectBtn.addEventListener('click', function () {
+        if (stripFile && navigator.canShare && navigator.canShare({ files: [stripFile] })) {
+          navigator.share({ files: [stripFile], title: 'our photo strip' }).catch(function (error) {
+            if (error && error.name === 'AbortError') return;
+            showSavePanel();
+          });
+          return;
+        }
+        showSavePanel();
+      });
+
+      saveClose.addEventListener('click', function () {
+        savePanel.hidden = true;
+        collectBtn.focus();
+      });
+
+      savePanel.addEventListener('click', function (event) {
+        if (event.target === savePanel) saveClose.click();
+      });
+    })();
+  </script>
+</body>
+</html>

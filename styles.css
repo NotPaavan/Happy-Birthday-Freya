@@ -1,0 +1,463 @@
+/* Tiled fabric background, star page centred, camera over its top-left star,
+   record spinning clockwise over its bottom-right stars. */
+
+/* Typewriter face from the artwork, self-hosted, so no network call. */
+@font-face {
+  font-family: "TypeWrong";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/typwrng.ttf") format("truetype");
+}
+
+:root {
+  /* The tiled fabric behind the card. */
+  --fabric: url("assets/tile-medium.jpg");
+
+  /* Every piece of handwriting on the site uses this. */
+  --typewriter: "TypeWrong", "Courier New", Courier, monospace;
+
+  /* Star card size: height as a share of the window. Raise or lower to taste.
+     Half the window leaves the fabric below it free for Snoopy asleep. */
+  --card-height: 50vh;
+
+  /* Record size, as a share of the card's width. */
+  --record-size: 56%;
+
+  /* One full turn, in seconds. Larger is slower. */
+  --record-spin: 8s;
+
+  /* Camera over the top-left star, sized as a share of the card's width. */
+  --camera-size: 66%;
+
+  /* Anticlockwise tilt. Pick whichever looks best: -26deg, -34deg or -42deg. */
+  --camera-angle: -26deg;
+
+  /* Heart note in the card's top-right corner. The padding inside the PNG
+     carries the stroke, so the box is a little larger than the heart itself. */
+  --note-size: 46%;
+
+  /* How much the record and the note grow on hover. */
+  --hover-grow: 1.06;
+
+  /* The fabric band between the top of the window and the top of the card,
+     down to the camera's highest corner. The lettering and the cut-out figure
+     are both sized from it. */
+  --birthday-band: calc((100vh - var(--card-height)) / 2 - var(--card-height) * 0.077);
+
+  /* Film strip laid over the card's lower left, tilted a little anticlockwise.
+     It overhangs the paper on both edges, so its base sits on the fabric. */
+  --strip-width: 30%;
+  --strip-angle: -7deg;
+  --strip-left: -8%;
+  --strip-top: 48%;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background-color: #e3d4bc;
+}
+
+body {
+  min-height: 100%;
+  background-color: #e3d4bc;   /* shows only until the tile loads */
+  background-image: var(--fabric);
+  background-repeat: repeat;   /* tile edge to edge in both directions */
+  background-position: center center;
+  background-size: auto;       /* every tile identical: no scaling, no drift */
+  background-attachment: fixed;/* pinned to the window, so it never jumps */
+}
+
+/* Full-screen box that holds the card dead centre, both axes. */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 4vw, 3rem);
+}
+
+/* Shrink-wrapped to the artwork, so the corners are the paper's real corners. */
+.card {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+/* HAPPY BIRTHDAY lettering cut from the birthday artwork and tinted to the star
+   page's cream. It fills the band of fabric between the top of the window and
+   the camera's highest corner, centred in that band. It is drawn before the
+   rest of the card, so the witch-hat Snoopy sits over its lower left. */
+.birthday {
+  /* The band: from the window's top edge down to the camera's top corner,
+     which rises 7.7% of the card's height above the paper; set on :root so the
+     figure behind the lettering can share it. */
+  position: fixed;
+  top: calc(var(--birthday-band) * 0.1);
+  left: 50%;
+  height: calc(var(--birthday-band) * 0.8);
+  width: auto;
+  transform: translateX(-50%);
+  display: block;
+  pointer-events: none;
+}
+
+/* The cut-out figure standing behind the "b" of BIRTHDAY. Its box copies the
+   lettering's box, so it keeps its place as the band resizes. The waist sits on
+   the letter's top edge, the top half rises above it, and the box clips at the
+   lettering's foot, so nothing of the lower half shows below the word. */
+.peek {
+  position: fixed;
+  top: calc(var(--birthday-band) * 0.1);
+  left: 50%;
+  height: calc(var(--birthday-band) * 0.8);
+  aspect-ratio: 593 / 233;   /* the lettering's own shape */
+  transform: translateX(-50%);
+  overflow: hidden;
+  clip-path: inset(0 0 2.5% 0);   /* stop at the lettering's foot */
+  pointer-events: none;
+}
+
+.peek img {
+  position: absolute;
+  bottom: 2.5%;              /* feet on the clip line, hidden behind the b */
+  left: 9.3%;                /* the middle of the b */
+  height: 84%;               /* head just under the letters' arc */
+  width: auto;
+  transform: translateX(-50%) rotate(-9deg);  /* lean with the arc */
+  transform-origin: 50% 100%;
+  display: block;
+}
+
+/* The cut-out behind the y of BIRTHDAY, on the right. It is cropped at the
+   waist, so the whole upper body shows; the hem tucks behind the tops of the
+   letters there. It leans the other way, clockwise, following the same arc. */
+.peek-y img {
+  bottom: 26.5%;             /* hem tucked behind the letters' upper edge */
+  left: 89%;                 /* the middle of the y */
+  height: 54.5%;             /* head just under the arc */
+  transform: translateX(-50%) rotate(9deg);   /* lean with the arc */
+}
+
+/* Sized by height so the fabric keeps a generous margin; aspect ratio is preserved. */
+.starpage {
+  display: block;
+  width: auto;
+  height: var(--card-height);
+  max-width: 92vw;
+  object-fit: contain;
+}
+
+/* The torn print laid on the page. The paper artwork is a slightly rotated
+   sheet inside its box, so its middle sits at 53.6% / 48.3% of the card rather
+   than dead centre; the photo is pinned there so the page wraps it evenly.
+   It comes before the camera, note, strip and record, which sit over its corners. */
+.mainphoto {
+  position: absolute;
+  left: 53.62%;
+  top: 48.28%;
+  width: 72%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  display: block;
+}
+
+/* The "favorite person" cutout laid over the print's top-right corner, tilted
+   like a note pressed into the pages. The arrow runs from the note's lower
+   right; its tip sits on this point and the note is turned about that tip, so
+   the arrow keeps aiming at the girl's head. The tilt is clockwise, so the
+   note leans up and to the right, above the tip. */
+.favorite {
+  position: absolute;
+  left: 77.5%;
+  top: 44%;
+  width: 46%;
+  transform: translate(-83.5%, -91.7%) rotate(17deg);
+  transform-origin: 83.5% 91.7%;
+  display: block;
+  pointer-events: none;
+}
+
+/* Sits over the top-left star, hiding it completely. The position is the star's
+   centre and the size is the smallest that covers it at this tilt. */
+.camera {
+  position: absolute;
+  left: 19%;
+  top: 14%;
+  width: var(--camera-size);
+  transform: translate(-50%, -50%) rotate(var(--camera-angle));
+  display: block;
+}
+
+/* Snoopy lying on the camera's top edge. The anchor is the middle of his belly
+   and it sits on that edge, so he tilts with the camera instead of floating. */
+.snoopy {
+  position: absolute;
+  left: 24%;
+  top: -1%;
+  width: 36%;
+  transform: translate(-50%, -100%) rotate(var(--camera-angle));
+  transform-origin: 50% 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* Snoopy asleep on his heap of leaves, lying on the fabric near the foot of the
+   screen. It is pinned to the window rather than the card, so his head keeps the
+   same seat above the bottom edge whatever the card's size. The negative bottom
+   pushes the heap of leaves just off the screen, leaving his head on the edge. */
+.snoopynap {
+  position: fixed;
+  left: 50%;
+  bottom: -1vh;
+  width: min(64vw, 34vh);
+  transform: translateX(-50%);
+  display: block;
+  pointer-events: none;
+}
+
+/* Sits over the two stars in the card's bottom-right corner, hiding them completely.
+   The percentages are the centre of that star pair, measured from the artwork. *//* The word written on the fabric at the record's upper right, tilted a little
+   anticlockwise, with a curved arrow at its left that hangs down onto the rim. */
+.playlistlabel {
+  position: absolute;
+  left: 90.5%;
+  top: 60.5%;
+  font-family: var(--typewriter);
+  font-size: clamp(9.5px, 3.1vw, 16px);
+  line-height: 1;
+  letter-spacing: 0.015em;
+  /* The bone-cream of the birthday lettering, outlined in the ink of the
+     "favorite person" handwriting, as thick as the arrows' keyline. */
+  color: #f3ddb4;
+  -webkit-text-stroke: clamp(1.5px, 0.11em, 1.8px) #81201a;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  transform: rotate(-10deg);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
+/* It hangs from under the first l of the word, curling down and left onto the
+   record's rim, so the arrow reads as drawn from the letter itself. */
+.playlist-arrow {
+  position: absolute;
+  left: -0.02em;
+  top: 100%;
+  width: 1.15em;
+  height: 2.9em;
+  overflow: visible;
+}
+
+.record {
+  position: absolute;
+  left: 80.2%;
+  top: 87.6%;
+  width: var(--record-size);
+  transform: translate(-50%, -50%);
+  display: block;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.record img {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation: record-spin var(--record-spin) linear infinite;
+}
+
+/* Film strip over the card's lower left; opens the blank page. */
+.filmstrip {
+  position: absolute;
+  left: var(--strip-left);
+  top: var(--strip-top);
+  width: var(--strip-width);
+  transform: rotate(var(--strip-angle));
+  transform-origin: 50% 90%;
+  display: block;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 180ms ease;
+}
+
+.filmstrip img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The word riding just over the strip's top edge. It lives inside the strip's
+   link, so it keeps the strip's tilt and grows with it on hover. The arrow
+   beside it hangs straight down, turned back against the strip's tilt, so it
+   points at the photos instead of leaning with them. */
+.striplabel {
+  position: absolute;
+  left: -17%;
+  bottom: calc(100% + 0.5em);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3em;
+  font-family: var(--typewriter);
+  font-size: clamp(9.5px, 2.8vw, 13.5px);
+  line-height: 1;
+  letter-spacing: 0.015em;
+  color: #f3ddb4;
+  /* Ink colour of the "favorite person" handwriting, at the same weight as the
+     arrows' keyline (the arrows show 0.9px of it either side of the cream). */
+  -webkit-text-stroke: clamp(1.5px, 0.11em, 1.8px) #81201a;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.strip-arrow {
+  width: 0.8em;
+  overflow: visible;
+  height: 1.95em;
+  transform: rotate(7deg);   /* straight down, against the strip's own tilt */
+  transform-origin: 50% 0;
+}
+
+.filmstrip:hover,
+.filmstrip:focus-visible {
+  transform: rotate(var(--strip-angle)) scale(var(--hover-grow));
+}
+
+.filmstrip:focus-visible {
+  outline: 3px solid #2b2118;
+  outline-offset: 6px;
+}
+
+/* Small heart note tucked into the card's top-right corner; opens the note pages. */
+.heartnote {
+  position: absolute;
+  left: 94%;
+  top: 17%;
+  width: var(--note-size);
+  transform: translate(-50%, -50%);
+  display: block;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.heartnote img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The word riding above the heart note, tilted the other way to the note's
+   slant, with a curved arrow beside it that hooks down towards the heart.
+   It lives inside the note's link, so it follows the note on narrow screens
+   and grows with it on hover. */
+.noteslabel {
+  position: absolute;
+  left: 64%;
+  bottom: calc(100% - 0.4em);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.22em;
+  font-family: var(--typewriter);
+  font-size: clamp(9.5px, 3.1vw, 16px);
+  line-height: 1;
+  letter-spacing: 0.015em;
+  color: #f3ddb4;
+  -webkit-text-stroke: clamp(1.5px, 0.11em, 1.8px) #81201a;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  transform: translateX(-50%) rotate(8deg);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+/* The word sits low in the label, level with the arrow's head, so it reads as
+   written beside the arrow rather than riding above it. The arrow keeps its
+   own place: only the word moves. */
+.noteslabel > span {
+  align-self: center;
+}
+
+.notes-arrow {
+  width: 1em;
+  overflow: visible;
+  height: 3.3em;   /* hangs past the word, down to the heart's top edge */
+  margin-left: 0.05em;
+  transform: rotate(-9deg);   /* leans back in over the heart's right lobe */
+  transform-origin: 50% 0;
+}
+
+/* The record and the note grow a few pixels when pointed at. */
+.record,
+.heartnote {
+  transition: transform 180ms ease;
+}
+
+.record:hover,
+.record:focus-visible {
+  transform: translate(-50%, -50%) scale(var(--hover-grow));
+}
+
+.heartnote:hover,
+.heartnote:focus-visible {
+  transform: translate(-50%, -50%) scale(var(--hover-grow));
+}
+
+.heartnote:focus-visible {
+  outline: 3px solid #2b2118;
+  outline-offset: 6px;
+}
+
+.record:focus-visible {
+  outline: 3px solid #2b2118;
+  outline-offset: 6px;
+  border-radius: 50%;
+}
+
+@keyframes record-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Still turns for reduced-motion systems, just far more gently. */
+@media (prefers-reduced-motion: reduce) {
+  .record img {
+    animation-duration: 45s;
+  }
+
+  .record,
+  .heartnote {
+    transition: none;
+  }
+}
+
+/* On narrow screens the card nearly fills the width, so tuck the note fully on-screen. */
+@media (max-width: 620px) {
+  :root {
+    --note-size: 40%;
+    --strip-width: 32%;
+    --strip-left: -7%;
+    --strip-top: 47%;
+  }
+
+  .heartnote {
+    left: 88%;
+  }
+}
+
+@media (max-height: 520px) {
+  .stage {
+    padding: 0.5rem;
+  }
+
+  :root {
+    --card-height: 62vh;
+  }
+}

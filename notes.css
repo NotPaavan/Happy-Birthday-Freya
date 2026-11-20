@@ -1,0 +1,371 @@
+/* The note: one blank page of the same paper, turned landscape, with sixteen pages to click. */
+
+/* Typewriter face from the artwork. Self-hosted, so no network call. */
+@font-face {
+  font-family: "TypeWrong";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/typwrng.ttf") format("truetype");
+}
+
+:root {
+  /* Landscape width of the sheet, and the paper's portrait proportions.
+     The artwork is trimmed to its edges, so the sheet box is the paper. */
+  --land: min(92vw, 78vh);
+  --paper-ratio: 502 / 713;
+
+  /* Every piece of text on the site uses this. */
+  --typewriter: "TypeWrong", "Courier New", Courier, monospace;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background-color: #e3d4bc;
+}
+
+body {
+  min-height: 100%;
+  background-color: #e3d4bc;
+  background-image: url("assets/tile-medium.jpg");
+  background-repeat: repeat;
+  background-position: center center;
+  background-size: auto;
+  background-attachment: fixed;
+  font-family: var(--typewriter);
+  text-transform: lowercase;
+  color: #2b2118;
+}
+
+/* Back to the scrapbook, top right of the page. */
+.back {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 5;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(43, 33, 24, 0.3);
+  background: rgba(255, 250, 240, 0.82);
+  color: #2b2118;
+  text-decoration: none;
+  font-family: var(--typewriter);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  transition: background 160ms ease;
+}
+
+.back:hover,
+.back:focus-visible {
+  background: #fff8ec;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.15rem;
+  padding: clamp(0.75rem, 4vw, 3rem);
+}
+
+/* The booth: one landscape sheet of the same paper, with the sign, the
+   curtains, a mirror and the way in laid over it. */
+.booth {
+  position: relative;
+  width: min(92vw, 70vh);
+  aspect-ratio: 713 / 502;
+}
+
+.paper {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Centred in the sheet and a little shorter than it, its width running from the
+   start of the H to the end of the O on the sign above (measured at 38.33%).
+   The curtains are the way in: they open the booth's camera. */
+.booth-curtain {
+  position: absolute;
+  left: 50%;
+  top: 51%;
+  width: 38.33%;
+  height: 84%;
+  display: block;
+  transform: translate(-50%, -50%);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.booth-curtain img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.booth-curtain:focus-visible {
+  outline: 3px solid #2b2118;
+  outline-offset: 4px;
+}
+
+/* Hung above the sheet rather than on it: its base sits on the paper's top
+   edge, so the sign floats on the fabric and leaves the curtains clear. */
+.booth-sign {
+  position: absolute;
+  left: 50%;
+  bottom: 98%;
+  width: 46%;
+  height: auto;
+  transform: translateX(-50%);
+  transition: filter 220ms ease;
+}
+
+/* Pointing at the curtains switches the sign on, the way a lightbox does, and
+   so does tabbing to them. The sign follows the curtains in the document,
+   hence the sibling selector. */
+.booth-curtain:hover ~ .booth-sign,
+.booth-curtain:focus-visible ~ .booth-sign {
+  filter: brightness(1.5) saturate(1.15)
+          drop-shadow(0 0 0.35rem rgba(255, 240, 200, 0.95))
+          drop-shadow(0 0 1.1rem rgba(255, 226, 160, 0.55));
+}
+
+/* Centred in the space between the curtains and the sheet's right edge. */
+.booth-mirror {
+  position: absolute;
+  left: 83.1%;
+  top: 52%;
+  height: 46%;
+  width: auto;
+  transform: translate(-50%, -50%);
+}
+
+/* The way in: notice and arrow together, centred in the space between the
+   sheet's left edge and the curtains, the arrow pointing at the opening. */
+.enter {
+  position: absolute;
+  left: 16.4%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.enter-label {
+  display: block;
+  padding: 0.28rem 0.45rem;
+  border: 1px solid rgba(43, 33, 24, 0.55);
+  border-radius: 0.5rem;
+  background: rgba(255, 250, 240, 0.86);
+  font-size: clamp(0.38rem, 1.4vw, 0.62rem);
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.enter-arrow {
+  width: clamp(18px, 6vw, 32px);
+  height: auto;
+  flex: none;
+}
+
+.enter-arrow path {
+  fill: none;
+  stroke: #2b2118;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The landscape footprint: as wide as the paper's portrait height. */
+.book {
+  position: relative;
+  width: var(--land);
+  height: calc(var(--land) * 502 / 713);
+}
+
+/* The portrait page, turned on its side so it reads landscape. */
+.sheet {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: var(--land);
+  width: auto;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+/* Page number, written on the sheet's lower right.
+   One inset for both edges: the percentage on the short side is scaled by the
+   paper's proportions so the gap from the right equals the gap from the bottom. */
+.folio {
+  --folio-inset: 6%;
+  position: absolute;
+  right: var(--folio-inset);
+  bottom: calc(var(--folio-inset) * 713 / 502);
+  font-size: clamp(0.8rem, 1.6vw, 1rem);
+  letter-spacing: 0.14em;
+  color: #8a7350;
+}
+
+/* A written note on a page. It is laid on the sheet in landscape, like the
+   folio, and takes the sheet's own margins. Nothing shows until its page is
+   turned to, so blank pages stay blank. */
+.note {
+  position: absolute;
+  top: 7%;
+  left: 8.5%;
+  right: 6.5%;
+  bottom: 15%;   /* the foot of the page, clear of the folio */
+  display: none;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.note.is-current {
+  display: flex;
+  pointer-events: auto;
+}
+
+/* The person's name, heading their note; same ink as the "favorite person"
+   handwriting on the scrapbook. */
+.note-title {
+  margin: 0 0 0.5em;
+  font-size: clamp(0.95rem, calc(var(--land) * 0.042), 1.6rem);
+  font-weight: 400;
+  /* A name keeps its capital, unlike the rest of the site's text. */
+  text-transform: none;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-align: center;
+  color: #81201a;
+}
+
+.note-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.45em;   /* keeps the writing clear of the scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(43, 33, 24, 0.32) transparent;
+  /* Large enough to read on a phone; a long note runs past the page's foot and
+     scrolls inside the paper, so nothing is lost and nothing leaves the sheet. */
+  font-size: clamp(0.7rem, calc(var(--land) * 0.032), 0.94rem);
+  line-height: 1.4;
+  letter-spacing: 0.005em;
+  color: #2b2118;
+}
+
+.note-body p {
+  margin: 0 0 0.45em;
+}
+
+.note-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* A photo tucked in under the writing, so it comes into view as the note is
+   scrolled: a paper mat with scissor-cut edges, turned a touch, dropping a soft
+   shadow onto the page like the scrapbook's other cut-outs. */
+.note-photo {
+  margin: 1.2em 3% 0.3em;   /* turned slightly, so it stays clear of the page's edge */
+  filter: drop-shadow(0 1px 1px rgba(43, 33, 24, 0.22))
+          drop-shadow(0 3px 5px rgba(43, 33, 24, 0.16));
+  transform: rotate(-1.2deg);
+}
+
+/* The mat is cut with the scissors, not the photo: the padding is the paper
+   border, and the clip trims both together. */
+.note-photo .cut {
+  display: block;
+  padding: 4% 4% 5.5%;
+  background: #f8f1e0;
+  clip-path: polygon(
+    1.2% 0.8%, 8% 0.2%, 17% 1.1%, 25% 0.3%, 34% 0.9%, 43% 0.1%, 52% 0.8%,
+    61% 0.2%, 70% 1%, 79% 0.3%, 88% 0.9%, 97% 0.2%, 99.1% 6%, 98.5% 14%,
+    99.2% 23%, 98.6% 32%, 99.3% 41%, 98.7% 50%, 99.4% 59%, 98.6% 68%,
+    99.2% 77%, 98.5% 86%, 99.1% 94%, 98% 99.2%, 90% 98.4%, 81% 99.3%,
+    72% 98.5%, 63% 99.4%, 54% 98.6%, 45% 99.3%, 36% 98.5%, 27% 99.2%,
+    18% 98.6%, 9% 99.4%, 1.5% 98.8%, 0.6% 93%, 1.3% 84%, 0.5% 75%, 1.2% 66%,
+    0.4% 57%, 1.1% 48%, 0.5% 39%, 1.3% 30%, 0.6% 21%, 1.2% 12%, 0.4% 4%
+  );
+}
+
+.note-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* A second photo on the same page turns the other way, so a run of them does
+   not look stamped out. */
+.note-photo:nth-of-type(even) {
+  transform: rotate(1.1deg);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.arrow {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(43, 33, 24, 0.32);
+  background: rgba(255, 250, 240, 0.8);
+  color: #2b2118;
+  font-family: var(--typewriter);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.arrow:hover {
+  background: #fff8ec;
+  transform: scale(1.08);
+}
+
+.arrow:focus-visible {
+  outline: 3px solid #2b2118;
+  outline-offset: 3px;
+}
+
+.count {
+  font-family: var(--typewriter);
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  color: #2b2118;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.82);
+  border: 1px solid rgba(43, 33, 24, 0.22);
+}
+
+@media (max-height: 520px) {
+  :root {
+    /* proportionally the same paper size as before the artwork was trimmed */
+    --land: min(67vw, 60vh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow,
+  .back {
+    transition: none;
+  }
+}

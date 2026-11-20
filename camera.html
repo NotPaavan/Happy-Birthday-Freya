@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>camera</title>
+  <link rel="stylesheet" href="notes.css?v=16">
+  <link rel="stylesheet" href="camera.css?v=4">
+</head>
+<body>
+  <a class="back" href="index.html">Main page</a>
+
+  <main class="stage">
+    <div class="viewfinder">
+      <video class="preview" autoplay playsinline muted></video>
+      <span class="countdown" aria-live="polite"></span>
+    </div>
+
+    <div class="controls">
+      <button class="filter-switch" type="button" aria-pressed="false" aria-label="Black and white">
+        <img src="assets/switch.png" alt="">
+      </button>
+      <button class="start" type="button" disabled>start</button>
+    </div>
+
+    <p class="hint" hidden>no camera found — allow camera access to take your photos</p>
+  </main>
+
+  <script>
+    (function () {
+      var preview = document.querySelector('.preview');
+      var filterBtn = document.querySelector('.filter-switch');
+      var startBtn = document.querySelector('.start');
+      var counter = document.querySelector('.countdown');
+      var viewfinder = document.querySelector('.viewfinder');
+      var hint = document.querySelector('.hint');
+
+      var bw = false;
+      var ready = false;
+      var busy = false;
+      var shots = [];
+
+      function wait(ms) {
+        return new Promise(function (resolve) { setTimeout(resolve, ms); });
+      }
+
+      function still() {
+        return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      }
+
+      /* The shutter blink, so it is obvious the picture was taken. */
+      function flash() {
+        viewfinder.classList.add('is-flashing');
+        setTimeout(function () { viewfinder.classList.remove('is-flashing'); }, 300);
+      }
+
+      /* The photo lifts out of the frame, shrinks, and sails off the screen. */
+      function sendOff(dataUrl) {
+        if (still()) { return Promise.resolve(); }
+        var rect = viewfinder.getBoundingClientRect();
+        var card = document.createElement('img');
+        card.className = 'shot-card';
+        card.alt = '';
+        card.src = dataUrl;
+        card.style.left = rect.left + 'px';
+        card.style.top = rect.top + 'px';
+        card.style.width = rect.width + 'px';
+        card.style.height = rect.height + 'px';
+        document.body.appendChild(card);
+        if (!card.animate) {
+          return wait(700).then(function () { card.remove(); });
+        }
+        var awayX = Math.round(window.innerWidth * 0.34);
+        var awayY = Math.round(window.innerHeight * 0.82);
+        var flight = card.animate([
+          { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1, offset: 0 },
+          { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1, offset: 0.3 },
+          { transform: 'translate(' + awayX + 'px, ' + awayY + 'px) scale(0.1) rotate(16deg)', opacity: 0, offset: 1 }
+        ], { duration: 950, easing: 'cubic-bezier(0.45, 0, 0.55, 1)' });
+        return flight.finished.then(
+          function () { card.remove(); },
+          function () { card.remove(); }
+        );
+      }
+
+      function startCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          hint.hidden = false;
+          return;
+        }
+        navigator.mediaDevices
+          .getUserMedia({ video: { facingMode: 'user' }, audio: false })
+          .then(function (stream) {
+            preview.srcObject = stream;
+            ready = true;
+            /* The preview is already live; start simply runs the countdown. */
+            startBtn.disabled = false;
+          })
+          .catch(function () {
+            hint.hidden = false;
+            startBtn.disabled = true;
+          });
+      }
+
+      /* The switch flips the picture — and the photos — to black and white. */
+      filterBtn.addEventListener('click', function () {
+        bw = !bw;
+        filterBtn.setAttribute('aria-pressed', String(bw));
+        filterBtn.classList.toggle('is-on', bw);
+        preview.classList.toggle('is-bw', bw);
+      });
+
+      /* One frame of the preview, cropped to the shape of the strip's frame. */
+      function grab() {
+        var W = 752;
+        var H = 768;
+        var vw = preview.videoWidth || 960;
+        var vh = preview.videoHeight || 720;
+        var aspect = W / H;
+        var sw = vw;
+        var sh = vw / aspect;
+        if (sh > vh) {
+          sh = vh;
+          sw = vh * aspect;
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        var ctx = canvas.getContext('2d');
+        if (bw) { ctx.filter = 'grayscale(1)'; }
+        /* Mirrored, to match the preview: left in the mirror is your right. */
+        ctx.translate(W, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(preview, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, W, H);
+        return canvas.toDataURL('image/jpeg', 0.9);
+      }
+
+      startBtn.addEventListener('click', function () {
+        if (busy || !ready) { return; }
+        busy = true;
+        startBtn.disabled = true;
+        filterBtn.disabled = true;
+        shots = [];
+
+        (async function () {
+          for (var i = 0; i < 3; i++) {
+            for (var n = 3; n > 0; n--) {
+              counter.textContent = n;
+              await wait(1000);
+            }
+            counter.textContent = '';
+            var shot = grab();
+            shots.push(shot);
+            flash();
+            await wait(240);
+            await sendOff(shot);
+            await wait(120);
+          }
+          try {
+            sessionStorage.setItem('booth-shots', JSON.stringify(shots));
+            /* the strip page keeps the same look the photos were taken in */
+            sessionStorage.setItem('booth-bw', bw ? '1' : '0');
+          } catch (error) {
+            /* storage full or blocked: the strip page will say there is nothing yet */
+          }
+          window.location.href = 'photos.html';
+        })();
+      });
+
+      startCamera();
+    })();
+  </script>
+</body>
+</html>

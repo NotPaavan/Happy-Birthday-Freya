@@ -1,0 +1,288 @@
+/* The booth camera, and the strip it hands you afterwards. */
+
+/* The live preview, set into a black frame so it reads as a recessed booth
+   screen. The shadow sits on a pseudo element, above the video. */
+.viewfinder {
+  position: relative;
+  width: min(80vw, 58vh);
+  aspect-ratio: 4 / 3;
+  border: 4px solid #000;
+  border-radius: 8px;
+  background: #000;
+  overflow: hidden;
+}
+
+.viewfinder::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 4px;
+  box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.72),
+              inset 0 3px 7px rgba(0, 0, 0, 0.6),
+              inset 0 -2px 4px rgba(0, 0, 0, 0.45);
+}
+
+.preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* A mirror, the way a selfie camera reads. The photo is mirrored to match. */
+  transform: scaleX(-1);
+  transition: filter 180ms ease;
+}
+
+.preview.is-bw {
+  filter: grayscale(1) contrast(1.05);
+}
+
+/* The blink of the shutter, so the photo reads as taken. */
+.viewfinder.is-flashing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #fff;
+  pointer-events: none;
+  animation: flash 300ms ease-out;
+}
+
+@keyframes flash {
+  from { opacity: 0.95; }
+  to { opacity: 0; }
+}
+
+/* The photo that was just taken, on its way off the screen. */
+.shot-card {
+  position: fixed;
+  z-index: 30;
+  box-sizing: border-box;
+  object-fit: cover;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  transform-origin: 50% 50%;
+}
+
+/* The three seconds, counted over the picture. */
+.countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  font-family: var(--typewriter);
+  font-size: clamp(3rem, 16vw, 6rem);
+  color: #fffaf0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+/* Switch and start, centred together under the preview. */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+}
+
+.filter-switch {
+  padding: 0.55rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: none;
+  line-height: 0;
+  cursor: pointer;
+  transition: transform 160ms ease, filter 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-switch img {
+  display: block;
+  height: clamp(40px, 12vw, 52px);
+  width: auto;
+  transition: transform 200ms ease;
+}
+
+.filter-switch:hover {
+  transform: translateY(-1px);
+}
+
+/* Flipped: the lever reads as switched, and the preview goes black and white. */
+.filter-switch.is-on img {
+  transform: scaleY(-1);
+}
+
+.start,
+.collect {
+  font-family: var(--typewriter);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(43, 33, 24, 0.45);
+  background: rgba(255, 250, 240, 0.92);
+  color: #2b2118;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+/* Darker under the pointer, so it reads as pressable. */
+.start:hover,
+.collect:hover {
+  background: #b9a68a;
+  border-color: #2b2118;
+}
+
+.start:disabled,
+.collect:disabled {
+  opacity: 0.55;
+  cursor: default;
+  background: rgba(255, 250, 240, 0.92);
+  border-color: rgba(43, 33, 24, 0.45);
+}
+
+.filter-switch:focus-visible,
+.start:focus-visible,
+.collect:focus-visible,
+.again:focus-visible {
+  outline: 3px solid #2b2118;
+  outline-offset: 4px;
+}
+
+.hint {
+  margin: 0;
+  max-width: 24rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  color: #5b4a35;
+  text-align: center;
+}
+
+/* collect, and the way back to the camera to try again. */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+/* The second way out, so it reads lighter than collect. */
+.again {
+  font-family: var(--typewriter);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(43, 33, 24, 0.3);
+  background: rgba(255, 250, 240, 0.55);
+  color: #2b2118;
+  text-decoration: none;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.again:hover,
+.again:focus-visible {
+  background: #b9a68a;
+  border-color: #2b2118;
+}
+
+/* Saving: the strip over a dim page, so it can be held down and saved straight
+   into photos on a phone, with a download for everything else. */
+.save {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: clamp(0.9rem, 5vw, 2rem);
+  background: rgba(43, 33, 24, 0.86);
+}
+
+.save[hidden] {
+  display: none;
+}
+
+.save-img {
+  display: block;
+  height: min(64vh, 74vw);
+  width: auto;
+  max-width: 100%;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.save-note {
+  margin: 0;
+  font-family: var(--typewriter);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  text-align: center;
+  color: #f6ecdd;
+}
+
+.save-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.save-download,
+.save-close {
+  font-family: var(--typewriter);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(43, 33, 24, 0.45);
+  background: rgba(255, 250, 240, 0.92);
+  color: #2b2118;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.save-download:hover,
+.save-close:hover {
+  background: #b9a68a;
+  border-color: #2b2118;
+}
+
+.save-download:focus-visible,
+.save-close:focus-visible {
+  outline: 3px solid #fffaf0;
+  outline-offset: 4px;
+}
+
+/* The finished strip on the page it opens. */
+.strip {
+  display: block;
+  height: min(58vh, 86vw);
+  width: auto;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.18));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview,
+  .filter-switch,
+  .filter-switch img,
+  .start,
+  .collect,
+  .again,
+  .save-download,
+  .save-close {
+    transition: none;
+  }
+
+  .viewfinder.is-flashing::after {
+    animation: none;
+    opacity: 0;
+  }
+}
