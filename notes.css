@@ -313,6 +313,47 @@ body {
   transform: rotate(1.1deg);
 }
 
+/* A page that is only a picture: no writing to scroll, so the print is centred
+   on the sheet and sized to fit it, the whole photo showing at once. It gets
+   more of the page than a written note, there being no text to make room for. */
+.note--photo {
+  top: 5%;
+  bottom: 10%;
+  left: 5%;
+  right: 5%;
+  justify-content: center;
+}
+
+.note--photo .note-body {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.note--photo .note-photo {
+  margin: 0;
+}
+
+/* The print's width follows its height here rather than the page's width, so
+   the mat is padded by a fixed amount instead of a share of an unknown width. */
+.note--photo .note-photo .cut {
+  padding: clamp(6px, 0.9vw, 11px) clamp(6px, 0.9vw, 11px) clamp(9px, 1.3vw, 15px);
+}
+
+.note--photo .note-photo img {
+  width: auto;
+  max-width: 100%;
+  max-height: calc(var(--land) * 0.52);
+}
+
+/* Four photo pages in a row alternate their tilt, like the extra photos. */
+.note--photo:nth-of-type(even) .note-photo {
+  transform: rotate(1.1deg);
+}
+
 .pager {
   display: flex;
   align-items: center;

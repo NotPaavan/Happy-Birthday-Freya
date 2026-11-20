@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Notes — 1 of 9</title>
-  <link rel="stylesheet" href="notes.css?v=13">
+  <title>Notes — 1 of 13</title>
+  <link rel="stylesheet" href="notes.css?v=15">
 </head>
 <body>
   <a class="back" href="index.html">Main page</a>
@@ -21,6 +21,10 @@
              <figure class="note-photo">
                <span class="cut"><img src="assets/photo.jpg" alt="..."></span>
              </figure>
+
+           A page that is only a picture has no title and no writing: its
+           article holds nothing but that figure. A photo wider than the page
+           runs past the foot and scrolls inside the paper, like a long note.
       -->
       <article class="note" data-page="1">
         <h1 class="note-title">Paavan</h1>
@@ -123,18 +127,50 @@
         </div>
       </article>
 
+      <article class="note note--photo" data-page="10">
+        <div class="note-body">
+          <figure class="note-photo">
+            <span class="cut"><img src="assets/people/photo10.jpg" alt="Freya and a friend in party dresses in front of a Happy 15th birthday backdrop"></span>
+          </figure>
+        </div>
+      </article>
+
+      <article class="note note--photo" data-page="11">
+        <div class="note-body">
+          <figure class="note-photo">
+            <span class="cut"><img src="assets/people/photo11.jpg?v=2" alt="Freya and a friend taking a selfie in a car park, one in a nike top"></span>
+          </figure>
+        </div>
+      </article>
+
+      <article class="note note--photo" data-page="12">
+        <div class="note-body">
+          <figure class="note-photo">
+            <span class="cut"><img src="assets/people/photo12.jpg" alt="Freya giving a friend a piggyback ride in a hallway"></span>
+          </figure>
+        </div>
+      </article>
+
+      <article class="note note--photo" data-page="13">
+        <div class="note-body">
+          <figure class="note-photo">
+            <span class="cut"><img src="assets/people/photo13.jpg" alt="Freya giving a friend a piggyback ride in front of a Happy 15th birthday backdrop"></span>
+          </figure>
+        </div>
+      </article>
+
       <span class="folio" aria-hidden="true">1</span>
     </div>
 
     <nav class="pager" aria-label="Page navigation">
       <button class="arrow" data-step="-1" aria-label="Previous page">&#8249;</button>
-      <span class="count" aria-live="polite">1 / 9</span>
+      <span class="count" aria-live="polite">1 / 13</span>
       <button class="arrow" data-step="1" aria-label="Next page">&#8250;</button>
     </nav>
   </main>
 
   <script>
-    var total = 9;
+    var total = 13;
     var page = 1;
     var folio = document.querySelector('.folio');
     var count = document.querySelector('.count');
