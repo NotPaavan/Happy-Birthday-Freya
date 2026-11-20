@@ -74,6 +74,74 @@ body {
   background-attachment: fixed;/* pinned to the window, so it never jumps */
 }
 
+/* The first paint, held in front of the page while its artwork downloads: the
+   card's star page, the record from its corner turning on the paper, and the
+   site's typewriter underneath, so the card never assembles itself in view. It
+   fades when the page's load event fires, then takes itself out of the page. */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background-color: #e3d4bc;
+  background-image: var(--fabric);
+  background-repeat: repeat;
+  background-position: center center;
+  transition: opacity 420ms ease;
+}
+
+.loader.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Sized by height so the sheet keeps clear of the window's edges. */
+.loader-sheet {
+  position: relative;
+  width: min(54vw, 36vh);
+  aspect-ratio: 553 / 853;
+  transform: rotate(-1.8deg);
+  filter: drop-shadow(0 1px 1px rgba(43, 33, 24, 0.22))
+          drop-shadow(0 6px 12px rgba(43, 33, 24, 0.16));
+}
+
+.loader-paper {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The card's own record, turning while the rest of the artwork arrives. The
+   wrapper holds the placement, so the spin keeps the disc on its centre. */
+.loader-disc {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 40%;
+  transform: translate(-50%, -50%);
+}
+
+.loader-disc img {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation: record-spin 2.6s linear infinite;
+}
+
+.loader-word {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  transform: translateX(-50%);
+  font-family: var(--typewriter);
+  font-size: clamp(0.75rem, calc(var(--card-height) * 0.035), 1.15rem);
+  line-height: 1;
+  letter-spacing: 0.16em;
+  color: #81201a;
+  white-space: nowrap;
+}
+
 /* Full-screen box that holds the card dead centre, both axes. */
 .stage {
   position: fixed;
@@ -430,6 +498,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .record img {
     animation-duration: 45s;
+  }
+
+  .loader-disc img {
+    animation-duration: 30s;
   }
 
   .record,

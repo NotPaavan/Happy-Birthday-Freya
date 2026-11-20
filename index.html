@@ -7,9 +7,22 @@
   <link rel="icon" href="favicon.ico" sizes="48x48">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=49">
+  <link rel="stylesheet" href="styles.css?v=50">
 </head>
 <body>
+  <!-- The first paint: the card's own star page with the record turning on it
+       and the site's typewriter underneath, held in front of the page until the
+       artwork has loaded, then lifted away. It reuses the two pictures the card
+       needs anyway, so it costs no extra download. -->
+  <div class="loader" id="loader" role="status" aria-live="polite">
+    <div class="loader-sheet">
+      <img class="loader-paper" src="assets/starpage-clean.png" alt="">
+      <span class="loader-disc"><img src="assets/record.png" alt=""></span>
+      <span class="loader-word">loading</span>
+    </div>
+  </div>
+  <noscript><style>.loader { display: none; }</style></noscript>
+
   <!-- The cut-out figure tucked behind the birthday lettering; it sits under
        the whole card, so the lettering covers its lower half. -->
   <div class="peek" aria-hidden="true">
@@ -99,5 +112,35 @@
 
   <img class="snoopynap" src="assets/snoopy-nap.png" alt="Snoopy asleep on a heap of autumn leaves">
 
+  <script>
+    /* The sheet stays until the window's load event, which waits for every
+       picture on the card, and a short minimum so it does not blink, then it
+       fades and takes itself out of the page. */
+    (function () {
+      var loader = document.getElementById('loader');
+      if (!loader) return;
+
+      var shown = performance.now();
+      var minimum = 900;
+      var lifted = false;
+
+      function lift() {
+        if (lifted) return;
+        lifted = true;
+        loader.classList.add('is-done');
+        window.setTimeout(function () { loader.remove(); }, 500);
+      }
+
+      function finish() {
+        window.setTimeout(lift, Math.max(0, minimum - (performance.now() - shown)));
+      }
+
+      if (document.readyState === 'complete') finish();
+      else window.addEventListener('load', finish);
+
+      /* Never leave the page behind the sheet if something fails to load. */
+      window.setTimeout(lift, 8000);
+    })();
+  </script>
 </body>
 </html>
